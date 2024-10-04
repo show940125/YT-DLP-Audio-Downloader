@@ -120,7 +120,7 @@ If you want to package this application into an executable file, you can use `Py
 If you would like to contribute to this project, please fork the repository and submit a pull request. Contributions, issues, and feature requests are welcome!
 
 ### License
-This project is licensed under the MIT License. See the `LICENSE` file for details.
+This project is licensed under the Apache-2.0 License. See the `LICENSE` file for details.
 
 ### Acknowledgments
 - Thanks to [yt-dlp](https://github.com/yt-dlp/yt-dlp) for providing a powerful YouTube download utility.
@@ -236,7 +236,7 @@ python main.py
 如果您想為本專案做出貢獻，請先 Fork 倉庫，然後提交 Pull Request。歡迎貢獻程式碼、報告問題和提出功能請求！
 
 ### 許可證
-本專案採用 MIT 許可證。詳情請參閱 `LICENSE` 檔案。
+本專案採用 Apache-2.0 許可證。詳情請參閱 `LICENSE` 檔案。
 
 ### 致謝
 - 感謝 [yt-dlp](https://github.com/yt-dlp/yt-dlp) 提供了強大的 YouTube 下載工具。
