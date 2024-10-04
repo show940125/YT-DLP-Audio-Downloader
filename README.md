@@ -126,7 +126,7 @@ This project is licensed under the Apache-2.0 License. See the `LICENSE` file fo
 - Thanks to [yt-dlp](https://github.com/yt-dlp/yt-dlp) for providing a powerful YouTube download utility.
 - Thanks to the [FFmpeg](https://ffmpeg.org/) project for enabling audio extraction.
 
-[Back to Top](#YT-DLP-Audio-Downloader-/-YT-DLP-音频下载器)
+[Back to Top](#top)
 
 ---
 
@@ -242,4 +242,4 @@ python main.py
 - 感謝 [yt-dlp](https://github.com/yt-dlp/yt-dlp) 提供了強大的 YouTube 下載工具。
 - 感謝 [FFmpeg](https://ffmpeg.org/) 專案，使音訊提取成為可能。
 
-[返回頂部](#YT-DLP-Audio-Downloader-/-YT-DLP-音頻下載器)
+[返回頂部](#top)
