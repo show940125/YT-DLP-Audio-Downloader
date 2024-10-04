@@ -1,4 +1,11 @@
+<a id="top"></a>
+
 # YT-DLP Audio Downloader / YT-DLP 音频下载器
+
+<div align="center">
+<img src="image/YT-DLP.png" alt="App Icon" width="400"/>
+</div>
+
 YT-DLP Audio Downloader is a GUI application that allows users to download audio from YouTube videos. 
 It is built using PyQt5 for the graphical user interface and yt-dlp for the downloading process, making it easy to extract audio from YouTube and save it in various formats.
 Unlike other tools, YT-DLP Audio Downloader offers an intuitive interface, detailed status updates, and the ability to select specific time segments, making it a versatile and user-friendly choice for all types of users.
