@@ -230,6 +230,6 @@ python main.py
 
 ### 致謝
 - 感謝 [yt-dlp](https://github.com/yt-dlp/yt-dlp) 為本專案提供強大的下載引擎。
-- 感謝 [FFmpeg](https://ffmpeg.org/) 使音訊與影片處理成為可能。
+- 感謝 [FFmpeg](https://ffmpeg.org/) 提供剪輯以及轉檔功能。
 
 [返回頂部](#top)
