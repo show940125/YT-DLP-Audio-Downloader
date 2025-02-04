@@ -12,7 +12,7 @@ Unlike other tools, YT-DLP Audio Downloader offers an intuitive interface, detai
 目前由於YT-DLP庫版本更新，舊有功能有些失效，請將該庫進行更新後再執行本專案。
 
 <div align="center">
-<img src="image/YT-DLP interface.jpg" alt="App Icon" width="600"/>
+<img src="image/YT-DLP UI.png" alt="App Icon" width="600"/>
   
   實際應用介面如圖
 </div>
