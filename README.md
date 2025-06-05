@@ -86,7 +86,7 @@ PyQt5
 FFmpeg is required for post-processing (video conversion and audio extraction). Follow these steps:
 1. Visit the [FFmpeg download page](https://ffmpeg.org/download.html) and download the appropriate version for your operating system.
 2. Extract the downloaded file.
-3. **Important:** Add the `bin` folder (e.g., `C:\ffmpeg\bin`) to your system's PATH, or note its absolute path. You will need to enter this absolute path in the application.
+3. **Important:** Add the `bin` folder (e.g., `C:\ffmpeg\bin`) to your system's PATH, or note the absolute path. In the application, you may enter either the FFmpeg folder path or the full path to the `ffmpeg` executable.
 
 To verify FFmpeg is correctly installed, run:
 ```sh
@@ -100,7 +100,7 @@ python main.py
 ```
 
 ### Usage
-1. **FFmpeg Path:** In the first row, enter the absolute path to the FFmpeg folder (e.g., `C:\ffmpeg\bin`) and click "Choose Folder" if needed.
+1. **FFmpeg Path:** In the first row, enter the path to the FFmpeg folder or the full path to the `ffmpeg` executable (e.g., `C:\ffmpeg\bin` or `C:\ffmpeg\bin\ffmpeg.exe`) and click "Choose Folder" if needed.
 2. **Video URL:** In the second row, enter the video URL and click “Get Video Info” to load video details.
 3. **Download Mode:** In the third row, select either “Download Video” or “Download Audio.”
 4. **Task List:** The current download tasks are displayed in a dedicated list. You can clear the list with the "Clear Task List" button.
@@ -189,7 +189,7 @@ PyQt5
 
 #### 步驟 4：安裝 FFmpeg
 1. 前往 [FFmpeg 下載頁面](https://ffmpeg.org/download.html) 下載適合的版本。
-2. 解壓後，將 `bin` 資料夾的路徑（如 `C:\ffmpeg\bin`）記下，並在應用程式中指定該絕對路徑。
+2. 解壓後，將 `bin` 資料夾的路徑（如 `C:\ffmpeg\bin`）記下，或取得 `ffmpeg.exe` 的完整路徑，並在應用程式中輸入其中之一。
 
 #### 步驟 5：運行應用程式
 ```sh
@@ -197,7 +197,7 @@ python main.py
 ```
 
 ### 使用方法
-1. **FFmpeg 路徑：** 在第一排輸入 FFmpeg 所在資料夾的絕對路徑，或使用「選擇資料夾」按鈕選擇。
+1. **FFmpeg 路徑：** 在第一排輸入 FFmpeg 資料夾路徑，或直接輸入 `ffmpeg.exe` 的完整路徑，也可以使用「選擇資料夾」按鈕選擇。
 2. **影片網址：** 輸入影片網址並點選「取得影片資訊」以獲取影片長度資訊。
 3. **下載模式：** 選擇「下載影片」或「下載音訊」。
 4. **任務列表：** 系統會顯示所有加入的任務，並可透過「清除任務列表」按鈕清空列表。

@@ -66,7 +66,8 @@ class DownloadWorker(QThread):
     def __init__(self, task: DownloadTask, ffmpeg_path, parent=None):
         super().__init__(parent)
         self.task = task
-        self.ffmpeg_path = ffmpeg_path  # 使用者指定的 FFmpeg.exe 所在資料夾（絕對路徑）
+        # 使用者可輸入 FFmpeg 資料夾或完整可執行檔路徑
+        self.ffmpeg_path = ffmpeg_path
         self.error = None
 
     def run(self):
@@ -80,9 +81,15 @@ class DownloadWorker(QThread):
 
             # 設定 yt-dlp 選項
             outtmpl = os.path.join(self.task.download_dir, '%(title)s.%(ext)s')
+            ffmpeg_exe = self.ffmpeg_path
+            if os.path.isdir(ffmpeg_exe):
+                exe_name = 'ffmpeg.exe' if os.name == 'nt' else 'ffmpeg'
+                ffmpeg_exe = os.path.join(ffmpeg_exe, exe_name)
+            if not os.path.isfile(ffmpeg_exe):
+                raise FileNotFoundError(f"找不到 FFmpeg：{ffmpeg_exe}")
             ydl_opts = {
                 'outtmpl': outtmpl,
-                'ffmpeg_location': self.ffmpeg_path,
+                'ffmpeg_location': ffmpeg_exe,
                 'progress_hooks': [self.ydl_hook],
                 'noplaylist': True,
                 'quiet': True,
@@ -145,7 +152,7 @@ class DownloadWorker(QThread):
                 trimmed_file = f"{base}_clip{ext}"
                 self.progress_signal.emit(0, f"開始剪輯：{info.get('title', 'video')}")
                 cmd = [
-                    os.path.join(self.ffmpeg_path, "ffmpeg.exe"),
+                    ffmpeg_exe,
                     "-y",
                     "-i", downloaded_file,
                     "-ss", self.format_time(start_sec),
