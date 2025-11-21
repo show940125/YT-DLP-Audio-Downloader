@@ -30,32 +30,51 @@
 2.GT既有項目+中英read.me
 """
 
-import sys, os, subprocess, traceback
-from PyQt5.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-    QLineEdit, QPushButton, QComboBox, QFileDialog, QRadioButton, QSlider,
-    QTimeEdit, QListWidget, QGroupBox, QStackedWidget, QTextEdit, QProgressBar
-)
-from PyQt5.QtCore import Qt, QTime, QThread, pyqtSignal, QSize
-from PyQt5.QtGui import QFont
+import os
+import subprocess
+import sys
+import traceback
+from dataclasses import dataclass
+from typing import List, Optional
+
 import yt_dlp
+from PyQt5.QtCore import Qt, QThread, QTime, QSize, pyqtSignal
+from PyQt5.QtGui import QFont
+from PyQt5.QtWidgets import (
+    QApplication,
+    QComboBox,
+    QFileDialog,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QMainWindow,
+    QPushButton,
+    QProgressBar,
+    QRadioButton,
+    QSlider,
+    QStackedWidget,
+    QTextEdit,
+    QTimeEdit,
+    QVBoxLayout,
+    QWidget,
+)
 
 # -------------------------------------------------
-# 定義單筆下載任務資料類別
+@dataclass
 class DownloadTask:
-    def __init__(self, url, mode, video_quality, video_format, audio_quality, audio_format,
-                 download_dir, start_time, end_time):
-        self.url = url.strip()
-        self.mode = mode  # "video" 或 "audio"
-        self.video_quality = video_quality  # 如 "最高", "720p", "480p", "360p"
-        self.video_format = video_format      # 如 "mp4", "mkv", "效率(webm)"
-        self.audio_quality = audio_quality    # 如 "128K", "256K"
-        self.audio_format = audio_format      # 如 "mp3", "wav", "效率(webm)"
-        self.download_dir = download_dir.strip()
-        self.start_time = start_time  # QTime 物件
-        self.end_time = end_time      # QTime 物件
-        self.duration = None          # 影片總秒數
-        self.filename = None          # 下載完成後的檔案名稱
+    url: str
+    mode: str  # "video" 或 "audio"
+    video_quality: str
+    video_format: str
+    audio_quality: str
+    audio_format: str
+    download_dir: str
+    start_time: QTime
+    end_time: QTime
+    duration: Optional[int] = None
+    filename: Optional[str] = None
 
 # -------------------------------------------------
 # Worker 線程：逐筆處理下載任務
@@ -63,68 +82,22 @@ class DownloadWorker(QThread):
     progress_signal = pyqtSignal(int, str)  # 傳送百分比與狀態文字
     task_finished = pyqtSignal(str)         # 任務完成後傳回訊息
 
-    def __init__(self, task: DownloadTask, ffmpeg_path, parent=None):
+    def __init__(self, task: DownloadTask, ffmpeg_path: str, parent=None):
         super().__init__(parent)
         self.task = task
         # 使用者可輸入 FFmpeg 資料夾或完整可執行檔路徑
         self.ffmpeg_path = ffmpeg_path
-        self.error = None
+        self.error: Optional[str] = None
 
     def run(self):
         try:
-            # 取得影片資訊，用以獲取影片長度與標題
-            ydl_opts_info = {'quiet': True, 'skip_download': True}
-            with yt_dlp.YoutubeDL(ydl_opts_info) as ydl:
-                info = ydl.extract_info(self.task.url, download=False)
+            info = self.fetch_video_info()
             total_sec = info.get('duration', 0)
             self.task.duration = total_sec
 
-            # 設定 yt-dlp 選項
+            ffmpeg_exe = self.resolve_ffmpeg_path()
             outtmpl = os.path.join(self.task.download_dir, '%(title)s.%(ext)s')
-            ffmpeg_exe = self.ffmpeg_path
-            if os.path.isdir(ffmpeg_exe):
-                exe_name = 'ffmpeg.exe' if os.name == 'nt' else 'ffmpeg'
-                ffmpeg_exe = os.path.join(ffmpeg_exe, exe_name)
-            if not os.path.isfile(ffmpeg_exe):
-                raise FileNotFoundError(f"找不到 FFmpeg：{ffmpeg_exe}")
-            ydl_opts = {
-                'outtmpl': outtmpl,
-                'ffmpeg_location': ffmpeg_exe,
-                'progress_hooks': [self.ydl_hook],
-                'noplaylist': True,
-                'quiet': True,
-            }
-            # 根據下載模式及種類分別設定
-            if self.task.mode == "audio":
-                if self.task.audio_format == "效率(webm)":
-                    ydl_opts['format'] = 'bestaudio/best'
-                else:
-                    ydl_opts['format'] = 'bestaudio/best'
-                    if self.task.audio_format.lower() == 'mp3':
-                        ydl_opts['postprocessors'] = [{
-                            'key': 'FFmpegExtractAudio',
-                            'preferredcodec': 'mp3'
-                        }]
-                        ydl_opts['postprocessor_args'] = ['-b:a', '128k'] if self.task.audio_quality == '128K' else ['-b:a', '256k']
-                    elif self.task.audio_format.lower() == 'wav':
-                        ydl_opts['postprocessors'] = [{
-                            'key': 'FFmpegExtractAudio',
-                            'preferredcodec': 'wav'
-                        }]
-            else:  # video 模式
-                if self.task.video_format == "效率(webm)":
-                    ydl_opts['format'] = 'bestvideo+bestaudio/best'
-                else:
-                    if self.task.video_quality == "最高":
-                        ydl_opts['format'] = 'bestvideo+bestaudio/best'
-                    else:
-                        quality_value = self.task.video_quality.replace("p", "")
-                        ydl_opts['format'] = f'bestvideo[height<={quality_value}]+bestaudio/best'
-                    ydl_opts['postprocessors'] = [{
-                        'key': 'FFmpegVideoConvertor',
-                        'preferedformat': self.task.video_format
-                    }]
-                    ydl_opts['merge_output_format'] = self.task.video_format
+            ydl_opts = self.build_ydl_options(outtmpl, ffmpeg_exe)
 
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([self.task.url])
@@ -176,11 +149,64 @@ class DownloadWorker(QThread):
             self.error = traceback.format_exc()
             self.task_finished.emit(f"錯誤：{str(e)}")
 
+    def fetch_video_info(self):
+        ydl_opts_info = {'quiet': True, 'skip_download': True}
+        with yt_dlp.YoutubeDL(ydl_opts_info) as ydl:
+            return ydl.extract_info(self.task.url, download=False)
+
+    def resolve_ffmpeg_path(self):
+        ffmpeg_exe = self.ffmpeg_path.strip()
+        if os.path.isdir(ffmpeg_exe):
+            exe_name = 'ffmpeg.exe' if os.name == 'nt' else 'ffmpeg'
+            ffmpeg_exe = os.path.join(ffmpeg_exe, exe_name)
+        if not os.path.isfile(ffmpeg_exe):
+            raise FileNotFoundError(f"找不到 FFmpeg：{ffmpeg_exe}")
+        return ffmpeg_exe
+
+    def build_ydl_options(self, outtmpl: str, ffmpeg_exe: str):
+        ydl_opts = {
+            'outtmpl': outtmpl,
+            'ffmpeg_location': ffmpeg_exe,
+            'progress_hooks': [self.ydl_hook],
+            'noplaylist': True,
+            'quiet': True,
+        }
+        if self.task.mode == "audio":
+            ydl_opts['format'] = 'bestaudio/best'
+            if self.task.audio_format != "效率(webm)":
+                bitrate = {"128K": "128k", "256K": "256k"}.get(self.task.audio_quality, "128k")
+                if self.task.audio_format.lower() == 'mp3':
+                    ydl_opts['postprocessors'] = [{
+                        'key': 'FFmpegExtractAudio',
+                        'preferredcodec': 'mp3'
+                    }]
+                    ydl_opts['postprocessor_args'] = ['-b:a', bitrate]
+                elif self.task.audio_format.lower() == 'wav':
+                    ydl_opts['postprocessors'] = [{
+                        'key': 'FFmpegExtractAudio',
+                        'preferredcodec': 'wav'
+                    }]
+        else:
+            if self.task.video_format == "效率(webm)":
+                ydl_opts['format'] = 'bestvideo+bestaudio/best'
+            else:
+                if self.task.video_quality == "最高":
+                    ydl_opts['format'] = 'bestvideo+bestaudio/best'
+                else:
+                    quality_value = self.task.video_quality.replace("p", "")
+                    ydl_opts['format'] = f'bestvideo[height<={quality_value}]+bestaudio/best'
+                ydl_opts['postprocessors'] = [{
+                    'key': 'FFmpegVideoConvertor',
+                    'preferedformat': self.task.video_format
+                }]
+                ydl_opts['merge_output_format'] = self.task.video_format
+        return ydl_opts
+
     def ydl_hook(self, d):
         if d.get('status') == 'downloading':
             total = d.get('total_bytes') or d.get('total_bytes_estimate')
             downloaded = d.get('downloaded_bytes', 0)
-            percent = int(downloaded / total * 100) if total else 0
+            percent = min(100, int(downloaded / total * 100)) if total else 0
             self.progress_signal.emit(percent, f"下載中：{percent}%")
         elif d.get('status') == 'finished':
             self.progress_signal.emit(100, "下載完成，等待後製處理...")
@@ -207,8 +233,8 @@ class MainWindow(QMainWindow):
         font = QFont()
         font.setPointSize(14)
         self.setFont(font)
-        self.tasks = []     # 儲存 DownloadTask 任務列表
-        self.worker = None  # 當前執行的 worker
+        self.tasks: List[DownloadTask] = []     # 儲存 DownloadTask 任務列表
+        self.worker: Optional[DownloadWorker] = None  # 當前執行的 worker
         # 先定義 status_label 以避免在 load_video_info 中引用錯誤
         self.status_label = QLabel("狀態：待命")
         self.init_ui()
@@ -298,7 +324,8 @@ class MainWindow(QMainWindow):
         # 第六排: 下載位置
         row6 = QHBoxLayout()
         row6.addWidget(QLabel("下載位置:"))
-        self.loc_input = QLineEdit(os.path.join(os.getcwd(), "downloads"))
+        default_download = os.path.join(os.path.expanduser("~"), "Downloads")
+        self.loc_input = QLineEdit(default_download)
         row6.addWidget(self.loc_input)
         self.browse_btn = QPushButton("選擇資料夾")
         self.browse_btn.clicked.connect(self.choose_folder)
@@ -460,6 +487,9 @@ class MainWindow(QMainWindow):
         self.url_input.clear()
 
     def start_batch_download(self):
+        if self.worker and self.worker.isRunning():
+            self.add_log("已有下載程序正在執行，請稍候。")
+            return
         if not self.tasks:
             self.add_log("沒有任務可下載！")
             return
@@ -476,6 +506,9 @@ class MainWindow(QMainWindow):
             self.start_batch_btn.setEnabled(True)
             self.status_label.setText("狀態：全部任務完成")
             return
+        if self.worker and self.worker.isRunning():
+            self.add_log("等待目前任務完成...")
+            return
         self.current_task = self.tasks.pop(0)
         self.status_label.setText(f"狀態：下載 {self.current_task.url} ...")
         ffmpeg_abs = self.ffmpeg_path_input.text().strip()
@@ -490,6 +523,8 @@ class MainWindow(QMainWindow):
 
     def task_finished(self, message):
         self.add_log(message)
+        if self.worker and self.worker.error:
+            self.add_log(self.worker.error)
         self.completed_tasks += 1
         overall = int(self.completed_tasks / (self.completed_tasks + len(self.tasks)) * 100)
         self.progress_bar.setValue(overall)
